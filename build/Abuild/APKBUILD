@@ -1,0 +1,68 @@
+# Alpine-Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Alpine-Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: Aaron Bassett <abassett@qnx.com>
+pkgname=simdutf
+pkgver=7.3.6
+pkgrel=1
+pkgdesc="Unicode validation and transcoding at billions of characters per second"
+url="https://simdutf.github.io/simdutf/"
+arch="all"
+depends="libc++"
+makedepends="
+	cmake
+	ninja
+	clang
+	libc++-dev
+	"
+license="Apache-2.0 OR MIT"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	fastbase64
+	sutf
+	"
+source="https://github.com/simdutf/simdutf/archive/v$pkgver/simdutf-$pkgver.tar.gz
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CC="clang" \
+	CXX="clang++" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DSIMDUTF_CXX_STANDARD=20 \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 LICENSE-MIT -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+doc() {
+	amove usr/share/licenses
+}
+
+fastbase64() {
+	amove usr/bin/fastbase64
+}
+
+sutf() {
+	amove usr/bin/sutf
+}
+
+
+sha512sums="
+d3fcf6277036bb5b87be74489f6003f720b9f5b9323368bdc692f625fa846496ef34bda6903c9825a1de7e346930034db70e23657456311609874ea11523000b  simdutf-7.3.6.tar.gz
+"
